@@ -16,6 +16,10 @@ display.set_caption("Faire son QCM facilement")
 state = "Name"
 clock = time.Clock().tick
 
+buttons = []
+active_Text = None
+texts = []
+
 
 
 
@@ -36,6 +40,19 @@ h = HEIGHT// a
 
 
 ### CLASSES ###
+class Text:
+    def __init__(self, x, y, w, h):
+        self.color = (30, 30, 30)
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+
+    def draw(self, text, police=font.SysFont("Arial", 36), color=(255, 255, 255)):
+        texte = police.render(text, True, color)
+        screen.blit(texte, (self.x, self.y))
+
+
 class Button:
     def __init__(self, x, y, w, h):
         self.color = (30, 30, 30)
@@ -43,15 +60,11 @@ class Button:
         self.y = y
         self.w = w
         self.h = h
-        pass
+        buttons.append(self)
 
     def draw(self, text, police=font.SysFont("Arial", 36), color=(255, 255, 255)):
         texte = police.render(text, True, color)
         screen.blit(texte, (self.x, self.y))
-        pass
-
-    def is_clicked(self, event):
-        pass
 
 class TextArea:
     def __init__(self, x, y, w, h, filler):
@@ -59,10 +72,16 @@ class TextArea:
         self.button = Button(x+50, y+50, w, h)
         self.placeholder = filler
         self.text = ""
-        self.rect = (x, y, w, h)
+        self.rect = Rect(x, y, w, h)
+        self.active_color = (200, 80, 125)
+        texts.append(self)
 
     def show(self):
-        draw.rect(screen, (0, 0, 0), self.rect)
+        if self.active:
+            draw.rect(screen, (0, 0, 0), self.rect)
+            draw.rect(screen, self.active_color, self.rect, 5, 5)
+        else:
+            draw.rect(screen, (0, 0, 0), self.rect)
         if self.text:
             text = self.text
             police = font.SysFont("Times New Roman", 20)
@@ -71,8 +90,19 @@ class TextArea:
             text = self.placeholder
             police = font.SysFont("Comic Sans MS", 15)
             self.button.draw(text, police, (100, 100, 100))
-Titre = Button(300, 25, 300, 50)
-Ask_Titre = TextArea(150, 100, 600, 300, "Nom de l'évaluation")
+
+    def is_clicked(self, event):
+        global active_Text
+        if event.button == 1:
+            if self.rect.collidepoint(event.pos):
+                self.active = True
+                active_Text = self
+            else:
+                self.active = False
+                active_Text = None
+
+Titre = Text(300, 25, 300, 50)
+Ask_Titre = TextArea(150, 100, 600, 300, "Entrez le nom de l'évaluation")
 
 
 
@@ -118,6 +148,14 @@ while running:
     for e in event.get():
         if e.type == QUIT:
             running = False
+
+        if e.type == MOUSEBUTTONDOWN:
+            for text in texts:
+                text.is_clicked(e)
+
+        if e.type == KEYDOWN:
+            if active_Text is not None:
+                active_Text.text += str(e.unicode)
 
     fond()
     if state == "Name":
